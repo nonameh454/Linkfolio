@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCUiIHkxPSIwJSIgeDI9IjEwMCUiIHkyPSIxMDAlIj48c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjZjQ3MmI2Ii8+PHN0b3Agb2Zmc2V0PSIzNSUiIHN0b3AtY29sb3I9IiNhNzhiZmEiLz48c3RvcCBvZmZzZXQ9IjY1JSIgc3RvcC1jb2xvcj0iIzYwYTVmYSIvPjxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzM0ZDM5OSIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiIgcng9IjgiIGZpbGw9InVybCgjZykiLz48dGV4dCB4PSI3IiB5PSIyNCIgZm9udC1mYW1pbHk9Ikdlb3JnaWEsc2VyaWYiIGZvbnQtd2VpZ2h0PSJib2xkIiBmb250LXNpemU9IjIyIiBmaWxsPSJ3aGl0ZSI+TDwvdGV4dD48L3N2Zz4="/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Linkfolio</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Outfit:wght@700;800;900&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#09090b;--surface:#111113;--s2:#18181b;--border:#27272a;
+  --accent:#6366f1;--ah:#4f46e5;--text:#f4f4f5;--muted:#71717a;
+  --tag-bg:#1e1b4b;--tag:#a5b4fc;--r:12px;--danger:#ef4444;--ok:#22c55e;
+  --warn:#f59e0b;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;overflow-x:hidden}
+body{background:var(--bg);color:var(--text);font-family:'Space Grotesk',sans-serif;min-height:100vh}
+
+/* TOPBAR */
+.topbar{position:sticky;top:0;z-index:200;background:rgba(9,9,11,.95);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 24px;height:52px;display:flex;align-items:center;gap:10px}
+.tb-title{font-family:'Outfit',sans-serif;font-weight:900;font-size:1.15rem;letter-spacing:-.02em;flex-shrink:0;background:linear-gradient(90deg,#f472b6,#a78bfa,#60a5fa,#34d399);background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:titleShift 4s linear infinite}
+.search-wrap{position:relative;flex:1;max-width:320px}
+.search-bar{display:flex;align-items:center;gap:8px;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:6px 14px;width:100%;transition:border-color .2s}
+.search-bar:focus-within{border-color:var(--accent)}
+.search-bar svg{color:var(--muted);flex-shrink:0}
+.search-bar input{background:none;border:none;outline:none;color:var(--text);font-family:inherit;font-size:.84rem;width:100%}
+.search-bar input::placeholder{color:var(--muted)}
+
+/* SYNC */
+.sync-pill{display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:8px;background:var(--s2);border:1px solid var(--border);font-size:11px;color:var(--muted);flex-shrink:0;cursor:pointer;transition:border-color .2s;font-family:inherit}
+.sync-pill:hover{border-color:var(--accent);color:var(--text)}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--muted);flex-shrink:0;transition:background .3s}
+.sync-dot.syncing{background:var(--warn);animation:pulse 1s infinite}
+.sync-dot.ok{background:var(--ok)}
+.sync-dot.err{background:var(--danger)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+@keyframes titleShift{0%{background-position:0% center}100%{background-position:200% center}}
+
+/* UNSAVED BADGE */
+.unsaved-badge{display:none;align-items:center;gap:5px;font-size:11px;color:var(--warn);padding:4px 10px;border-radius:8px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2)}
+.unsaved-badge.show{display:flex}
+
+/* SECTION NAV */
+.sec-nav{position:sticky;top:52px;z-index:190;background:rgba(17,11,32,.97);backdrop-filter:blur(20px);border-bottom:1px solid rgba(99,102,241,.18);padding:0 24px;display:flex;align-items:center;gap:2px;overflow-x:auto;scrollbar-width:none}
+.sec-nav::-webkit-scrollbar{display:none}
+.sec-nav-empty{padding:10px 0;font-size:12px;color:var(--muted);font-style:italic}
+.snav-pill{display:inline-flex;align-items:center;gap:5px;padding:0 12px;height:38px;border-radius:0;border:none;background:transparent;color:var(--muted);font-family:inherit;font-size:.82rem;font-weight:500;cursor:pointer;white-space:nowrap;transition:color .18s;border-bottom:2px solid transparent;margin-bottom:-1px}
+.snav-pill:hover{color:var(--text)}
+.snav-pill.active{color:var(--accent);border-bottom-color:var(--accent)}
+.snav-pill .snav-eye{width:15px;height:15px;opacity:0;transition:opacity .15s;cursor:pointer;flex-shrink:0}
+.snav-pill:hover .snav-eye{opacity:.7}
+.snav-pill.hidden-sec{opacity:.4}
+.snav-divider{width:1px;height:18px;background:var(--border);flex-shrink:0;margin:0 6px}
+.snav-hide-all{display:inline-flex;align-items:center;gap:5px;padding:0 10px;height:38px;border:none;background:transparent;color:var(--muted);font-family:inherit;font-size:.78rem;cursor:pointer;white-space:nowrap;transition:color .18s;border-bottom:2px solid transparent;margin-bottom:-1px;margin-left:auto;flex-shrink:0}
+.snav-hide-all:hover{color:var(--text)}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:6px 13px;border-radius:8px;font-size:12.5px;font-weight:600;border:none;cursor:pointer;transition:all .16s;font-family:inherit;white-space:nowrap;letter-spacing:-.01em}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border)}
+.btn-ghost:hover:not(:disabled){color:var(--text);border-color:var(--accent)}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover:not(:disabled){background:var(--ah)}
+.btn-push{background:rgba(99,102,241,.12);color:var(--accent);border:1px solid rgba(99,102,241,.3)}
+.btn-push:hover:not(:disabled){background:rgba(99,102,241,.22)}
+.btn-danger{background:rgba(239,68,68,.1);color:var(--danger);border:1px solid rgba(239,68,68,.2)}
+.btn-danger:hover:not(:disabled){background:rgba(239,68,68,.2)}
+.btn-sm{padding:3px 9px;font-size:11px;border-radius:6px}
+.btn-icon{padding:5px 7px;border-radius:6px;font-size:13px}
+
+/* WRAP */
+.wrap{width:100%;padding:16px 24px 48px}
+
+/* SECTIONS */
+.section{margin-bottom:28px;scroll-margin-top:100px;width:100%}
+.section.sec-collapsed .cards-grid{display:none}
+.sec-hdr{display:flex;align-items:center;gap:8px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+.sec-icon{width:26px;height:26px;border-radius:6px;display:grid;place-items:center;font-size:13px;flex-shrink:0}
+.sec-hdr h2{font-family:'Outfit',sans-serif;font-size:.95rem;font-weight:700;flex:1;letter-spacing:-.01em}
+.sec-count{font-size:10px;color:var(--muted);background:var(--s2);padding:2px 9px;border-radius:99px;border:1px solid var(--border)}
+.sec-collapse-btn{background:none;border:none;cursor:pointer;color:var(--muted);padding:3px 5px;border-radius:5px;display:flex;align-items:center;transition:all .15s}
+.sec-collapse-btn:hover{color:var(--text);background:var(--s2)}
+
+/* CARDS GRID — fluid, no max-width clamp */
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;width:100%}
+
+/* ADD CARD BTN */
+.add-card-btn{background:transparent;border:2px dashed var(--border);border-radius:var(--r);min-height:155px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;transition:border-color .2s,background .2s;color:var(--muted);font-size:.8rem;font-family:inherit}
+.add-card-btn:hover{border-color:var(--accent);background:rgba(99,102,241,.04);color:var(--accent)}
+
+/* LINK CARD */
+.link-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;text-decoration:none;display:flex;flex-direction:column;position:relative;transition:transform .2s cubic-bezier(.2,.8,.3,1),border-color .2s,box-shadow .2s}
+.link-card:hover{transform:translateY(-3px);border-color:rgba(99,102,241,.4);box-shadow:0 8px 30px rgba(0,0,0,.3)}
+.link-card:hover .thumb-img{transform:scale(1.04)}
+.link-card:hover .card-arrow{opacity:1;transform:translate(2px,-2px)}
+.card-thumb{width:100%;aspect-ratio:16/9;position:relative;overflow:hidden;flex-shrink:0;background:var(--s2)}
+.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .3s,opacity .3s;opacity:0}
+.thumb-fb{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;transition:opacity .3s}
+.thumb-fb.loaded{opacity:0;pointer-events:none}
+.fb-icon{width:40px;height:40px;border-radius:10px;object-fit:contain;padding:6px;background:rgba(255,255,255,.06)}
+.fb-domain{font-size:10px;color:rgba(255,255,255,.25);letter-spacing:.04em}
+.play-btn{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s;background:rgba(0,0,0,.2)}
+.link-card:hover .play-btn{opacity:1}
+.card-dur{position:absolute;bottom:7px;right:7px;background:rgba(0,0,0,.8);color:#fff;font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px}
+.card-src{position:absolute;top:7px;left:7px;display:flex;align-items:center;gap:4px;background:rgba(0,0,0,.7);border:1px solid rgba(255,255,255,.07);border-radius:5px;padding:2px 7px;font-size:10px;color:#dde3f8}
+.sdot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.shimmer{position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.03),transparent);background-size:200% 100%;animation:shimmer 1.4s infinite}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.card-body{padding:9px 11px 11px;display:flex;flex-direction:column;gap:3px;flex:1}
+.card-title{font-family:'Outfit',sans-serif;font-size:.84rem;font-weight:600;line-height:1.4;color:var(--text);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.card-meta{display:flex;align-items:center;gap:6px;font-size:.7rem;color:var(--muted);flex-wrap:wrap}
+.card-tags{display:flex;flex-wrap:wrap;gap:3px;margin-top:3px}
+.card-tag{font-size:10px;color:var(--tag);background:var(--tag-bg);border:1px solid rgba(99,102,241,.2);border-radius:99px;padding:1px 7px}
+.card-arrow{position:absolute;top:9px;right:9px;width:22px;height:22px;border-radius:6px;background:var(--accent);display:grid;place-items:center;opacity:0;transition:opacity .2s,transform .2s;color:#fff}
+.card-actions{position:absolute;top:7px;right:7px;display:none;gap:4px;z-index:10}
+.link-card:hover .card-actions{display:flex}
+.link-card:hover .card-arrow{display:none}
+.card-act-btn{width:28px;height:28px;border-radius:7px;border:none;cursor:pointer;display:grid;place-items:center;font-size:13px;transition:transform .15s,opacity .15s;backdrop-filter:blur(8px)}
+.card-act-edit{background:rgba(99,102,241,.85);color:#fff}
+.card-act-edit:hover{background:rgba(99,102,241,1);transform:scale(1.1)}
+.card-act-del{background:rgba(239,68,68,.85);color:#fff}
+.card-act-del:hover{background:rgba(239,68,68,1);transform:scale(1.1)}
+
+/* CONTEXT MENU */
+.ctx-menu{position:fixed;z-index:9999;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:4px;min-width:200px;box-shadow:0 8px 32px rgba(0,0,0,.6);display:none}
+.ctx-menu.show{display:block;animation:ctxIn .1s ease}
+@keyframes ctxIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+.ctx-item{display:flex;align-items:center;gap:9px;padding:7px 11px;border-radius:6px;cursor:pointer;font-size:.82rem;color:var(--text);transition:background .12s;white-space:nowrap;border:none;background:none;font-family:inherit;width:100%;text-align:left}
+.ctx-item:hover{background:var(--s2)}
+.ctx-item .ctx-icon{font-size:13px;width:16px;text-align:center;flex-shrink:0}
+.ctx-item.ctx-incognito{color:#a5b4fc}
+.ctx-item.ctx-incognito:hover{background:rgba(165,180,252,.08)}
+.ctx-divider{height:1px;background:var(--border);margin:3px 4px}
+.ctx-hint{font-size:10px;color:var(--muted);padding:5px 11px 3px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:220px}
+
+/* MODAL */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);z-index:500;display:flex;align-items:center;justify-content:center;padding:16px;opacity:0;pointer-events:none;transition:opacity .18s}
+.overlay.open{opacity:1;pointer-events:auto}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;width:100%;max-width:480px;padding:24px;display:flex;flex-direction:column;gap:15px;max-height:92vh;overflow-y:auto;transform:translateY(10px);transition:transform .2s}
+.overlay.open .modal{transform:translateY(0)}
+.modal-title{font-family:'Outfit',sans-serif;font-size:1.05rem;font-weight:700}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+.field input,.field select{background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:inherit;font-size:.86rem;outline:none;transition:border-color .18s;width:100%}
+.field input:focus,.field select:focus{border-color:var(--accent)}
+.field input::placeholder{color:var(--muted)}
+.hint{font-size:11px;color:var(--muted);margin-top:2px;min-height:15px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;padding-top:4px}
+.confirm-modal{max-width:340px}
+
+/* SETUP MODAL */
+.setup-modal{max-width:520px}
+.setup-step{background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:14px 15px;display:flex;gap:11px;align-items:flex-start;transition:opacity .2s}
+.step-num{width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;font-size:10px;font-weight:700;display:grid;place-items:center;flex-shrink:0;margin-top:2px}
+.step-body{flex:1;min-width:0}
+.step-title{font-size:.86rem;font-weight:600;margin-bottom:4px}
+.step-desc{font-size:.78rem;color:var(--muted);line-height:1.6}
+.step-link{color:var(--accent);text-decoration:none}
+.step-link:hover{text-decoration:underline}
+.token-row,.gist-row{display:flex;gap:8px;margin-top:8px}
+.token-row input,.gist-row input{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:8px 11px;color:var(--text);font-family:monospace;font-size:.8rem;outline:none;transition:border-color .18s}
+.token-row input:focus,.gist-row input:focus{border-color:var(--accent)}
+.setup-or{text-align:center;font-size:.75rem;color:var(--muted);padding:5px 0}
+.connected-box{background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.2);border-radius:10px;padding:13px 15px}
+.connected-box .cb-title{font-size:.86rem;font-weight:600;color:var(--ok);margin-bottom:5px}
+.connected-box .cb-info{font-size:.8rem;color:var(--muted);line-height:1.7}
+.connected-box code{color:var(--text);font-size:.78rem;word-break:break-all}
+.connected-box .cb-actions{display:flex;gap:7px;margin-top:10px;flex-wrap:wrap}
+
+/* ERROR BOX */
+.err-box{background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:10px 13px;font-size:.8rem;color:var(--danger);line-height:1.5}
+
+/* LOADING STATE */
+.loading-state{text-align:center;padding:80px 20px;color:var(--muted)}
+.loading-state .spin{width:32px;height:32px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 16px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-state p{font-size:.88rem}
+
+/* EMPTY */
+.empty-state{text-align:center;padding:80px 20px;color:var(--muted)}
+.empty-state h3{font-family:'Outfit',sans-serif;font-size:1.1rem;margin-bottom:8px;color:var(--text)}
+.empty-state p{font-size:.86rem;line-height:1.6;margin-bottom:20px}
+
+/* SEARCH SUGGESTIONS */
+.suggestions{position:absolute;top:calc(100% + 6px);left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,.5);z-index:300;display:none}
+.suggestions.open{display:block}
+.sugg-group-title{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:7px 12px 3px}
+.sugg-item{display:flex;align-items:center;gap:8px;padding:7px 12px;cursor:pointer;transition:background .12s;font-size:.81rem;color:var(--text)}
+.sugg-item:hover,.sugg-item.focused{background:var(--s2)}
+.sugg-tag{font-size:10px;color:var(--tag);background:var(--tag-bg);border-radius:99px;padding:1px 7px}
+.sugg-section-label{font-size:10px;color:var(--muted);margin-left:auto;flex-shrink:0}
+.sugg-divider{height:1px;background:var(--border);margin:3px 0}
+.sugg-no-results{padding:10px 12px;font-size:.8rem;color:var(--muted);font-style:italic}
+
+/* SHORTCUTS */
+.kbd-hint{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);cursor:pointer;padding:5px 9px;border-radius:7px;border:1px solid var(--border);transition:all .15s;white-space:nowrap;background:transparent;font-family:inherit}
+.kbd-hint:hover{color:var(--text);border-color:var(--accent)}
+.shortcuts-modal{max-width:500px}
+.sc-group-title{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:8px 0 3px;margin-top:2px}
+.sc-row{display:flex;align-items:center;justify-content:space-between;padding:7px 11px;border-radius:7px;gap:14px;background:var(--s2)}
+.sc-row:nth-child(even){background:transparent}
+.sc-desc{font-size:.82rem;color:var(--text)}
+.sc-keys{display:flex;align-items:center;gap:4px;flex-shrink:0}
+.kbd{display:inline-flex;align-items:center;justify-content:center;background:#09090b;border:1px solid #27272a;border-bottom:3px solid #27272a;border-radius:5px;padding:2px 6px;font-size:10px;font-weight:700;color:#a1a1aa;min-width:20px;white-space:nowrap}
+.kbd-plus{font-size:9px;color:var(--muted)}
+
+/* TOAST */
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(14px);z-index:1000;background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:10px 18px;font-size:12.5px;display:flex;align-items:center;gap:7px;box-shadow:0 6px 24px rgba(0,0,0,.5);opacity:0;transition:all .24s;pointer-events:none;white-space:nowrap}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.toast.ok{border-color:rgba(34,197,94,.3);color:var(--ok)}
+.toast.err{border-color:rgba(239,68,68,.3);color:var(--danger)}
+.toast.warn{border-color:rgba(245,158,11,.3);color:var(--warn)}
+
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <span class="tb-title">Linkfolio</span>
+  <div class="search-wrap">
+    <div class="search-bar">
+      <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" id="searchInput" placeholder="Search…" autocomplete="off"/>
+    </div>
+    <div class="suggestions" id="suggestions"></div>
+  </div>
+  <div class="unsaved-badge" id="unsavedBadge">● Unsaved changes</div>
+  <div class="sync-pill" id="syncPill" onclick="openModal('setupModal')" title="Sync settings">
+    <span class="sync-dot" id="syncDot"></span>
+    <span id="syncLabel">Not connected</span>
+  </div>
+  <button class="btn btn-push" id="btnPush" onclick="pushToGist()" title="Push changes to Gist" style="display:none">⬆ Push</button>
+  <button class="kbd-hint" id="btnShortcuts"><span class="kbd">?</span></button>
+  <button class="btn btn-ghost" id="btnToggleEdit">✏️ Edit</button>
+  <button class="btn btn-primary" id="btnAddSection">＋ Section</button>
+</div>
+
+<!-- SECTION NAV -->
+<div class="sec-nav" id="secNav"></div>
+
+<!-- MAIN -->
+<div class="wrap">
+  <div id="root"></div>
+  <footer style="text-align:center;font-size:.75rem;color:var(--muted);padding-top:32px;border-top:1px solid var(--border);margin-top:12px">
+    Linkfolio · Synced via GitHub Gist
+  </footer>
+</div>
+
+<!-- ═══ SETUP MODAL ═══ -->
+<div class="overlay" id="setupModal">
+  <div class="modal setup-modal">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div class="modal-title">☁️ GitHub Gist Sync</div>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('setupModal')">✕</button>
+    </div>
+    <p style="font-size:.82rem;color:var(--muted);line-height:1.6">Data is stored in your <strong style="color:var(--text)">secret GitHub Gist</strong> — private and free.</p>
+
+    <div id="setupErrBox" style="display:none"></div>
+
+    <div class="setup-step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <div class="step-title">GitHub Personal Access Token</div>
+        <div class="step-desc">
+          Create one at <a class="step-link" href="https://github.com/settings/tokens/new" target="_blank">github.com/settings/tokens/new</a><br>
+          Expiration: <b>No expiration</b> · Scope: ✅ <code style="color:var(--ok)">gist</code> only
+        </div>
+        <div class="token-row">
+          <input type="password" id="tokenInput" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off" spellcheck="false"/>
+          <button class="btn btn-primary btn-sm" onclick="saveToken()">Save</button>
+        </div>
+        <div class="hint" id="tokenHint"></div>
+      </div>
+    </div>
+
+    <div class="setup-step" id="step2" style="opacity:.3;pointer-events:none">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <div class="step-title">Connect Gist</div>
+        <div class="step-desc">Your Gist ID is pre-filled. Just click Connect to load your data.</div>
+        <div class="gist-row">
+          <input type="text" id="gistIdInput" placeholder="Gist ID" spellcheck="false"/>
+          <button class="btn btn-primary btn-sm" id="btnConnectGist" onclick="connectGist()">Connect</button>
+        </div>
+        <div class="hint" id="gistHint"></div>
+      </div>
+    </div>
+
+    <div class="connected-box" id="connectedBox" style="display:none">
+      <div class="cb-title">✅ Connected</div>
+      <div class="cb-info">
+        Gist ID: <code id="cbGistId"></code><br>
+        <a id="cbGistUrl" class="step-link" href="#" target="_blank" rel="noopener">View on GitHub Gist ↗</a>
+      </div>
+      <div class="cb-actions">
+        <button class="btn btn-ghost btn-sm" onclick="pullFromGist()">🔄 Pull latest</button>
+        <button class="btn btn-push btn-sm" onclick="pushToGist()">⬆ Push now</button>
+        <button class="btn btn-danger btn-sm" onclick="disconnectGist()">Disconnect</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LINK MODAL -->
+<div class="overlay" id="linkModal">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-title" id="linkModalTitle">Add Link</div>
+    <div class="field">
+      <label>URL *</label>
+      <div style="position:relative;display:flex;align-items:center">
+        <input type="url" id="fUrl" placeholder="Paste URL - title auto-fetches" style="padding-right:90px"/>
+        <span id="fetchSpinner" style="display:none;position:absolute;right:10px;font-size:11px;color:var(--muted);pointer-events:none">fetching...</span>
+      </div>
+      <span class="hint" id="urlHint"></span>
+    </div>
+    <div class="field">
+      <label>Title *</label>
+      <input type="text" id="fTitle" placeholder="Auto-filled or type manually"/>
+    </div>
+    <div class="field">
+      <label>Tags <span style="opacity:.5;font-size:10px">(comma separated)</span></label>
+      <input type="text" id="fTags" placeholder="python, beginner"/>
+    </div>
+    <div class="field"><label>Section</label><select id="fSection"></select></div>
+    <input type="hidden" id="fMeta"/>
+    <input type="hidden" id="fViews"/>
+    <input type="hidden" id="fDuration"/>
+    <input type="hidden" id="fYtid"/>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="btnLinkCancel">Cancel</button>
+      <button class="btn btn-primary" id="btnLinkSave">Save Link</button>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION MODAL -->
+<div class="overlay" id="secModal">
+  <div class="modal">
+    <div class="modal-title" id="secModalTitle">New Section</div>
+    <div class="field"><label>Title *</label><input type="text" id="sTitle" placeholder="e.g. Machine Learning"/></div>
+    <div class="row2">
+      <div class="field"><label>Icon (emoji)</label><input type="text" id="sIcon" placeholder="🤖" maxlength="2"/></div>
+      <div class="field"><label>Icon Color</label><input type="color" id="sColor" value="#1a1a2e"/></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="btnSecCancel">Cancel</button>
+      <button class="btn btn-primary" id="btnSecSave">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div class="overlay" id="confirmModal">
+  <div class="modal confirm-modal">
+    <div class="modal-title" id="confirmTitle">Delete?</div>
+    <p id="confirmMsg" style="color:var(--muted);font-size:.85rem;line-height:1.6"></p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="btnConfirmNo">Cancel</button>
+      <button class="btn btn-danger" id="btnConfirmYes">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- SHORTCUTS MODAL -->
+<div class="overlay" id="shortcutsModal">
+  <div class="modal shortcuts-modal">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div class="modal-title">⌨️ Shortcuts</div>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('shortcutsModal')">✕</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:3px">
+      <div class="sc-group-title">Navigation</div>
+      <div class="sc-row"><span class="sc-desc">Focus search</span><span class="sc-keys"><span class="kbd" id="kMod1">⌘</span><span class="kbd-plus">+</span><span class="kbd">K</span></span></div>
+      <div class="sc-row"><span class="sc-desc">Close / clear</span><span class="sc-keys"><span class="kbd">Esc</span></span></div>
+      <div class="sc-row"><span class="sc-desc">Jump to section 1–9</span><span class="sc-keys"><span class="kbd" id="kMod2">⌘</span><span class="kbd-plus">+</span><span class="kbd">1–9</span></span></div>
+      <div class="sc-group-title">Editing</div>
+      <div class="sc-row"><span class="sc-desc">Toggle edit mode</span><span class="sc-keys"><span class="kbd" id="kMod3">⌘</span><span class="kbd-plus">+</span><span class="kbd">E</span></span></div>
+      <div class="sc-row"><span class="sc-desc">New section</span><span class="sc-keys"><span class="kbd" id="kMod4">⌘</span><span class="kbd-plus">+</span><span class="kbd">Shift</span><span class="kbd-plus">+</span><span class="kbd">N</span></span></div>
+      <div class="sc-row"><span class="sc-desc">Show shortcuts</span><span class="sc-keys"><span class="kbd">?</span></span></div>
+    </div>
+    <p style="font-size:10px;color:var(--muted);text-align:center;margin-top:4px">Mac: ⌘ Cmd · Windows: Ctrl</p>
+  </div>
+</div>
+
+<!-- CONTEXT MENU -->
+<div class="ctx-menu" id="ctxMenu">
+  <span class="ctx-hint" id="ctxHint"></span>
+  <button class="ctx-item ctx-incognito" id="ctxIncognito"><span class="ctx-icon">🕵️</span> Open in Incognito</button>
+  <button class="ctx-item" id="ctxNewTab"><span class="ctx-icon">↗️</span> Open in New Tab</button>
+  <div class="ctx-divider"></div>
+  <button class="ctx-item" id="ctxCopy"><span class="ctx-icon">🔗</span> Copy Link</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════
+// CONSTANTS
+// ═══════════════════════════════════════
+const TOKEN_KEY    = 'rh_gh_token';
+const GIST_ID_KEY  = 'rh_gist_id';
+const GIST_FILE    = 'resource_hub_data.json';
+const HARDCODED_GIST_ID = 'f2b2daeaef6595a768c9d9efc580ebdd';
+
+// ═══════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════
+const uid       = () => Math.random().toString(36).slice(2,9);
+const getDomain = u  => { try { return new URL(u).hostname.replace('www.',''); } catch { return u; } };
+const getYtId   = url=> { try { const u=new URL(url); if(u.hostname.includes('youtube.com')) return u.searchParams.get('v')||''; if(u.hostname.includes('youtu.be')) return u.pathname.slice(1); } catch{} return ''; };
+const domainGrad= d  => { let h=0; for(let i=0;i<d.length;i++) h=(h*31+d.charCodeAt(i))>>>0; const hue=h%360; return `linear-gradient(135deg,hsl(${hue},30%,8%),hsl(${(hue+50)%360},40%,14%))`; };
+const getToken  = () => localStorage.getItem(TOKEN_KEY) || '';
+const getGistId = () => localStorage.getItem(GIST_ID_KEY) || HARDCODED_GIST_ID;
+
+// ═══════════════════════════════════════
+// STATE — starts empty, populated from Gist
+// ═══════════════════════════════════════
+let data          = [];
+let hiddenSecs    = new Set();
+let collapsedSecs = new Set();
+let editMode      = false;
+let editingLinkId = null;
+let editingLinkSec= null;
+let editingSecId  = null;
+let confirmCb     = null;
+let hasUnsaved    = false;
+
+function markUnsaved() {
+  hasUnsaved = true;
+  document.getElementById('unsavedBadge').classList.add('show');
+  if (getToken()) document.getElementById('btnPush').style.display = 'inline-flex';
+}
+function markSaved() {
+  hasUnsaved = false;
+  document.getElementById('unsavedBadge').classList.remove('show');
+}
+
+// ═══════════════════════════════════════
+// GIST SYNC
+// ═══════════════════════════════════════
+function setSyncStatus(state, label) {
+  document.getElementById('syncDot').className = 'sync-dot ' + (state||'');
+  document.getElementById('syncLabel').textContent = label;
+}
+
+function showSetupError(msg) {
+  const box = document.getElementById('setupErrBox');
+  box.innerHTML = `<div class="err-box">⚠️ ${msg}</div>`;
+  box.style.display = 'block';
+}
+function clearSetupError() {
+  document.getElementById('setupErrBox').style.display = 'none';
+}
+
+async function pushToGist(silent=false) {
+  const token  = getToken();
+  const gistId = getGistId();
+  if (!token)  { toast('⚠️ No token — open sync settings','warn'); openModal('setupModal'); return; }
+  if (!gistId) { toast('⚠️ No Gist connected','warn'); openModal('setupModal'); return; }
+  setSyncStatus('syncing','Pushing…');
+  try {
+    const payload = {
+      description:'Resource Hub Data',
+      files:{ [GIST_FILE]:{ content: JSON.stringify({data, hiddenSecs:[...hiddenSecs], collapsedSecs:[...collapsedSecs]},null,2) } }
+    };
+    const res = await fetch(`https://api.github.com/gists/${gistId}`, {
+      method:'PATCH',
+      headers:{'Authorization':`token ${token}`,'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    if (res.status===401) throw new Error('Token is invalid or expired. Please create a new token.');
+    if (res.status===403) throw new Error('Token lacks gist permission. Make sure you ticked the gist scope.');
+    if (res.status===404) throw new Error('Gist not found. Check the Gist ID or create a new one.');
+    if (!res.ok) { const e=await res.json(); throw new Error(e.message||'HTTP '+res.status); }
+    setSyncStatus('ok','Synced ✓');
+    markSaved();
+    if (!silent) toast('☁️ Pushed to Gist','ok');
+  } catch(e) {
+    setSyncStatus('err','Push failed');
+    if (!silent) toast('❌ '+e.message,'err');
+    else showSetupError(e.message);
+  }
+}
+
+async function pullFromGist(silent=false) {
+  const token  = getToken();
+  const gistId = getGistId();
+  if (!token)  { toast('⚠️ No token — open sync settings','warn'); openModal('setupModal'); return; }
+  if (!gistId) return;
+  setSyncStatus('syncing','Pulling…');
+  try {
+    const res = await fetch(`https://api.github.com/gists/${gistId}`, {
+      headers:{'Authorization':`token ${token}`}
+    });
+    if (res.status===401) throw new Error('Token is invalid or expired. Create a new token at github.com/settings/tokens.');
+    if (res.status===403) throw new Error('Token lacks gist permission. Tick the gist scope when creating the token.');
+    if (res.status===404) throw new Error('Gist not found. The Gist ID may be wrong, or it was deleted.');
+    if (!res.ok) { const e=await res.json(); throw new Error(e.message||'HTTP '+res.status); }
+    const gist = await res.json();
+    const content = gist.files?.[GIST_FILE]?.content;
+    if (!content) throw new Error(`File "${GIST_FILE}" not found in Gist. This Gist may not have been set up yet.`);
+    const parsed = JSON.parse(content);
+    if (parsed.data) {
+      data          = parsed.data;
+      hiddenSecs    = new Set(parsed.hiddenSecs    || []);
+      collapsedSecs = new Set(parsed.collapsedSecs || []);
+      render();
+    }
+    setSyncStatus('ok','Synced ✓');
+    markSaved();
+    if (!silent) toast('🔄 Pulled from Gist','ok');
+  } catch(e) {
+    setSyncStatus('err','Pull failed');
+    if (!silent) { toast('❌ '+e.message,'err'); }
+    if (!silent && document.getElementById('setupModal').classList.contains('open')) showSetupError(e.message);
+    else if (silent) showRootError(e.message);
+  }
+}
+
+function showRootError(msg) {
+  document.getElementById('root').innerHTML = `
+    <div class="empty-state">
+      <h3>Could not load data</h3>
+      <p>${msg}</p>
+      <button class="btn btn-primary" onclick="openModal('setupModal')">Open Sync Settings</button>
+    </div>`;
+}
+
+// ═══════════════════════════════════════
+// SETUP MODAL LOGIC
+// ═══════════════════════════════════════
+function saveToken() {
+  clearSetupError();
+  const val = document.getElementById('tokenInput').value.trim();
+  if (!val.startsWith('ghp_') && !val.startsWith('github_pat_')) {
+    document.getElementById('tokenHint').textContent = '⚠️ Should start with ghp_ or github_pat_';
+    return;
+  }
+  localStorage.setItem(TOKEN_KEY, val);
+  document.getElementById('tokenHint').textContent = '✅ Token saved';
+  document.getElementById('step2').style.opacity = '1';
+  document.getElementById('step2').style.pointerEvents = 'auto';
+  document.getElementById('btnPush').style.display = 'inline-flex';
+  if (getGistId()) showConnectedBox();
+}
+
+async function connectGist() {
+  clearSetupError();
+  const token  = getToken();
+  const gistId = document.getElementById('gistIdInput').value.trim() || HARDCODED_GIST_ID;
+  if (!token) { showSetupError('Save your token first (Step 1).'); return; }
+  document.getElementById('gistHint').textContent = 'Connecting…';
+  document.getElementById('btnConnectGist').disabled = true;
+  try {
+    const res = await fetch(`https://api.github.com/gists/${gistId}`, {
+      headers:{'Authorization':`token ${token}`}
+    });
+    if (res.status===401) throw new Error('Token is invalid or expired.');
+    if (res.status===403) throw new Error('Token lacks gist permission. Re-create with the gist scope.');
+    if (res.status===404) throw new Error('Gist not found. Double-check the ID.');
+    if (!res.ok) { const e=await res.json(); throw new Error(e.message||'HTTP '+res.status); }
+    const gist = await res.json();
+    localStorage.setItem(GIST_ID_KEY, gistId);
+    document.getElementById('gistHint').textContent = '';
+    showConnectedBox();
+    // Load data from gist
+    const content = gist.files?.[GIST_FILE]?.content;
+    if (content) {
+      const p = JSON.parse(content);
+      if (p.data) { data=p.data; hiddenSecs=new Set(p.hiddenSecs||[]); collapsedSecs=new Set(p.collapsedSecs||[]); render(); }
+    }
+    setSyncStatus('ok','Synced ✓');
+    markSaved();
+    toast('✅ Connected! Data loaded.','ok');
+  } catch(e) {
+    document.getElementById('gistHint').textContent = '❌ '+e.message;
+    showSetupError(e.message);
+  } finally {
+    document.getElementById('btnConnectGist').disabled = false;
+  }
+}
+
+function showConnectedBox() {
+  const gistId = getGistId();
+  document.getElementById('connectedBox').style.display = 'block';
+  document.getElementById('cbGistId').textContent = gistId;
+  document.getElementById('cbGistUrl').href = `https://gist.github.com/${gistId}`;
+  setSyncStatus('ok','Synced ✓');
+}
+
+function disconnectGist() {
+  if (!confirm('Disconnect? Local data is cleared — reconnect to reload from Gist.')) return;
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(GIST_ID_KEY);
+  data=[]; hiddenSecs=new Set(); collapsedSecs=new Set();
+  document.getElementById('connectedBox').style.display = 'none';
+  document.getElementById('tokenInput').value = '';
+  document.getElementById('tokenHint').textContent = '';
+  document.getElementById('gistIdInput').value = HARDCODED_GIST_ID;
+  document.getElementById('step2').style.opacity = '.3';
+  document.getElementById('step2').style.pointerEvents = 'none';
+  document.getElementById('btnPush').style.display = 'none';
+  setSyncStatus('','Not connected');
+  markSaved();
+  render();
+  toast('Disconnected','ok');
+}
+
+function initSetupModal() {
+  clearSetupError();
+  const token  = getToken();
+  const gistId = getGistId();
+  document.getElementById('gistIdInput').value = gistId || HARDCODED_GIST_ID;
+  if (token) {
+    document.getElementById('tokenInput').value = token;
+    document.getElementById('tokenHint').textContent = '✅ Token saved';
+    document.getElementById('step2').style.opacity = '1';
+    document.getElementById('step2').style.pointerEvents = 'auto';
+  }
+  if (token && gistId) showConnectedBox();
+}
+
+// ═══════════════════════════════════════
+// SVG ICONS
+// ═══════════════════════════════════════
+const EYE_ON  = `<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
+const EYE_OFF = `<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
+const CHV_D = `<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>`;
+const CHV_U = `<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="m18 15-6-6-6 6"/></svg>`;
+const ARROW = `<svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M7 17 17 7M7 7h10v10"/></svg>`;
+const PLAY  = `<svg width="42" height="42" viewBox="0 0 42 42"><circle cx="21" cy="21" r="21" fill="rgba(0,0,0,.55)"/><polygon points="16,12 33,21 16,30" fill="white"/></svg>`;
+
+// ═══════════════════════════════════════
+// SECTION NAV
+// ═══════════════════════════════════════
+function renderSecNav() {
+  const nav = document.getElementById('secNav');
+  nav.innerHTML = '';
+  if (!data.length) { nav.innerHTML='<span class="sec-nav-empty">No sections — add some!</span>'; return; }
+  const allHidden = data.every(s=>hiddenSecs.has(s.id));
+  data.forEach(sec => {
+    const isHidden = hiddenSecs.has(sec.id);
+    const pill = document.createElement('button');
+    pill.className = 'snav-pill' + (isHidden ? ' hidden-sec' : '');
+    pill.dataset.secId = sec.id;
+    pill.innerHTML = `<span>${sec.icon||'📁'}</span><span>${sec.title}</span><span class="snav-eye" onclick="event.stopPropagation();toggleHideSection('${sec.id}')" title="${isHidden?'Show':'Hide'}">${isHidden?EYE_OFF:EYE_ON}</span>`;
+    pill.addEventListener('click', () => {
+      if (isHidden) { toggleHideSection(sec.id); return; }
+      document.querySelector(`.section[data-sec-id="${sec.id}"]`)?.scrollIntoView({behavior:'smooth',block:'start'});
+      document.querySelectorAll('.snav-pill').forEach(p=>p.classList.remove('active'));
+      pill.classList.add('active');
+    });
+    nav.appendChild(pill);
+  });
+  const div = document.createElement('span'); div.className='snav-divider'; nav.appendChild(div);
+  const btn = document.createElement('button'); btn.className='snav-hide-all';
+  btn.innerHTML = allHidden ? `${EYE_ON} Show All` : `${EYE_OFF} Hide All`;
+  btn.onclick = () => { if(allHidden) hiddenSecs.clear(); else data.forEach(s=>hiddenSecs.add(s.id)); render(); };
+  nav.appendChild(btn);
+}
+
+function initScrollSpy() {
+  const obs = new IntersectionObserver(entries=>entries.forEach(e=>{
+    if(e.isIntersecting){ const sid=e.target.dataset.secId; document.querySelectorAll('.snav-pill').forEach(p=>p.classList.toggle('active',p.dataset.secId===sid)); }
+  }),{rootMargin:'-20% 0px -70% 0px'});
+  document.querySelectorAll('.section').forEach(s=>obs.observe(s));
+}
+
+function toggleHideSection(secId) {
+  if(hiddenSecs.has(secId)) hiddenSecs.delete(secId); else hiddenSecs.add(secId);
+  markUnsaved(); render();
+}
+
+// ═══════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════
+function render() {
+  const root = document.getElementById('root');
+  root.innerHTML = '';
+
+  if (!data.length) {
+    if (getToken()) {
+      root.innerHTML = `<div class="empty-state"><h3>No data yet</h3><p>Pull from Gist or add your first section below.</p><button class="btn btn-ghost" onclick="pullFromGist()">🔄 Pull from Gist</button></div>`;
+    } else {
+      root.innerHTML = `<div class="empty-state"><h3>Welcome to Resource Hub</h3><p>Connect your GitHub Gist to load and sync your data across all devices.</p><button class="btn btn-primary" onclick="openModal('setupModal')">☁️ Connect Gist</button></div>`;
+    }
+    renderSecNav(); return;
+  }
+
+  data.forEach(sec => {
+    if (hiddenSecs.has(sec.id)) return;
+    const isCollapsed = collapsedSecs.has(sec.id);
+    const el = document.createElement('div');
+    el.className = 'section' + (isCollapsed ? ' sec-collapsed' : '');
+    el.dataset.secId = sec.id;
+    let cardsHTML = sec.links.map(l=>cardHTML(l)).join('');
+    if (editMode) cardsHTML += `<button class="add-card-btn" onclick="openAddLink('${sec.id}')"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>Add Link</button>`;
+    el.innerHTML = `
+      <div class="sec-hdr">
+        <div class="sec-icon" style="background:${sec.iconBg||'#1a1a2e'}">${sec.icon||'📁'}</div>
+        <h2>${sec.title}</h2>
+        <span class="sec-count">${sec.links.length} link${sec.links.length!==1?'s':''}</span>
+        <button class="sec-collapse-btn" onclick="toggleCollapse('${sec.id}')">${isCollapsed?CHV_D:CHV_U}</button>
+        ${editMode?`<button class="btn btn-ghost btn-sm" onclick="openEditSection('${sec.id}')">✏️</button><button class="btn btn-danger btn-sm" onclick="confirmDelete('Delete section?','All links will be removed.',()=>deleteSection('${sec.id}'))">🗑</button>`:''}
+      </div>
+      <div class="cards-grid">${cardsHTML}</div>`;
+    root.appendChild(el);
+  });
+  renderSecNav(); loadThumbnails(); initScrollSpy();
+}
+
+function toggleCollapse(secId) {
+  if(collapsedSecs.has(secId)) collapsedSecs.delete(secId); else collapsedSecs.add(secId);
+  markUnsaved(); render();
+}
+
+function cardHTML(link) {
+  const domain = getDomain(link.url), isYT=!!link.ytid;
+  const srcClr = isYT?'#ef4444':'#6366f1', srcLbl=isYT?'YouTube':domain;
+  const safeTitle = link.title.replace(/'/g,"\\'").replace(/"/g,'&quot;');
+  const editBtns = editMode
+    ? `<div class="card-actions"><button class="card-act-btn card-act-edit" onclick="event.preventDefault();openEditLink('${link.id}')" title="Edit">✏️</button><button class="card-act-btn card-act-del" onclick="event.preventDefault();confirmDelete('Delete link?','',()=>deleteLink('${link.id}'))" title="Delete">🗑</button></div>`
+    : `<div class="card-arrow">${ARROW}</div>`;
+  return `<a class="link-card" href="${link.url}" target="_blank" rel="noopener"
+    data-ytid="${link.ytid||''}" data-domain="${domain}" data-title="${link.title}" data-tags="${(link.tags||[]).join(',')}"
+    oncontextmenu="showCtxMenu(event,'${link.url}','${safeTitle}')">
+    <div class="card-thumb">
+      <div class="shimmer"></div>
+      <div class="thumb-fb" style="background:${domainGrad(domain)}">
+        <img class="fb-icon" src="https://www.google.com/s2/favicons?sz=128&domain=${domain}" alt=""/>
+        <span class="fb-domain">${domain}</span>
+      </div>
+      <img class="thumb-img" alt=""/>
+      ${isYT?`<div class="play-btn">${PLAY}</div>`:''}
+      ${link.duration?`<span class="card-dur">${link.duration}</span>`:''}
+      <span class="card-src"><span class="sdot" style="background:${srcClr}"></span>${srcLbl}</span>
+    </div>
+    <div class="card-body">
+      <div class="card-title">${link.title}</div>
+      <div class="card-meta">
+        ${link.meta?`<span>${link.meta}</span>`:''}
+        ${link.views?`<span style="width:3px;height:3px;border-radius:50%;background:var(--border);display:inline-block"></span><span>${link.views} views</span>`:''}
+      </div>
+      ${link.tags?.length?`<div class="card-tags">${link.tags.map(t=>`<span class="card-tag">${t}</span>`).join('')}</div>`:''}
+    </div>
+    ${editBtns}
+  </a>`;
+}
+
+// ═══════════════════════════════════════
+// THUMBNAILS
+// ═══════════════════════════════════════
+function loadThumbnails() {
+  document.querySelectorAll('.link-card').forEach(card=>{
+    const ytid=card.dataset.ytid, href=card.getAttribute('href');
+    const img=card.querySelector('.thumb-img'), fb=card.querySelector('.thumb-fb'), shim=card.querySelector('.shimmer');
+    const show=src=>{ const p=new Image(); p.onload=()=>{img.src=src;img.style.opacity='1';fb?.classList.add('loaded');if(shim)shim.style.display='none';}; p.onerror=()=>{if(shim)shim.style.display='none';}; p.src=src; };
+    if(ytid){ const max=`https://i.ytimg.com/vi/${ytid}/maxresdefault.jpg`,hq=`https://i.ytimg.com/vi/${ytid}/hqdefault.jpg`; const p=new Image(); p.onload=()=>show(p.naturalWidth>200?max:hq); p.onerror=()=>show(hq); p.src=max; }
+    else { fetch(`https://api.microlink.io/?url=${encodeURIComponent(href)}&meta=true`,{signal:AbortSignal.timeout(7000)}).then(r=>r.json()).then(j=>{const u=j?.data?.image?.url;if(u)show(u);else if(shim)shim.style.display='none';}).catch(()=>{if(shim)shim.style.display='none';}); }
+  });
+}
+
+// ═══════════════════════════════════════
+// EDIT MODE
+// ═══════════════════════════════════════
+document.getElementById('btnToggleEdit').onclick=()=>{
+  editMode=!editMode;
+  document.getElementById('btnToggleEdit').textContent=editMode?'👁 View':'✏️ Edit';
+  render();
+};
+
+// ═══════════════════════════════════════
+// SECTION CRUD
+// ═══════════════════════════════════════
+document.getElementById('btnAddSection').onclick=()=>{
+  editingSecId=null;
+  document.getElementById('secModalTitle').textContent='New Section';
+  ['sTitle','sIcon'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('sColor').value='#1a1a2e';
+  openModal('secModal');
+};
+
+function openEditSection(secId){ const sec=data.find(s=>s.id===secId); if(!sec) return; editingSecId=secId; document.getElementById('secModalTitle').textContent='Edit Section'; document.getElementById('sTitle').value=sec.title; document.getElementById('sIcon').value=sec.icon||''; document.getElementById('sColor').value=sec.iconBg||'#1a1a2e'; openModal('secModal'); }
+
+document.getElementById('btnSecSave').onclick=()=>{
+  const title=document.getElementById('sTitle').value.trim(); if(!title){toast('Title required','err');return;}
+  const icon=document.getElementById('sIcon').value.trim()||'📁', color=document.getElementById('sColor').value;
+  if(editingSecId){ const sec=data.find(s=>s.id===editingSecId); if(sec){sec.title=title;sec.icon=icon;sec.iconBg=color;} }
+  else data.push({id:uid(),title,icon,iconBg:color,links:[]});
+  markUnsaved(); closeModal('secModal'); render(); toast(editingSecId?'✅ Section updated':'✅ Section created','ok');
+};
+document.getElementById('btnSecCancel').onclick=()=>closeModal('secModal');
+
+function deleteSection(secId){ data=data.filter(s=>s.id!==secId); hiddenSecs.delete(secId); collapsedSecs.delete(secId); markUnsaved(); render(); toast('Section deleted','ok'); }
+
+// ═══════════════════════════════════════
+// LINK CRUD
+// ═══════════════════════════════════════
+function openAddLink(secId){ editingLinkId=null;editingLinkSec=secId; document.getElementById('linkModalTitle').textContent='Add Link'; ['fUrl','fTitle','fMeta','fViews','fDuration','fYtid','fTags'].forEach(id=>document.getElementById(id).value=''); document.getElementById('urlHint').textContent=''; document.getElementById('fetchSpinner').style.display='none'; populateSectionSelect(secId); openModal('linkModal'); }
+
+function openEditLink(linkId){ let link,secId; data.forEach(sec=>{const l=sec.links.find(l=>l.id===linkId);if(l){link=l;secId=sec.id;}}); if(!link)return; editingLinkId=linkId;editingLinkSec=secId; document.getElementById('linkModalTitle').textContent='Edit Link'; document.getElementById('fUrl').value=link.url||''; document.getElementById('fTitle').value=link.title||''; document.getElementById('fMeta').value=link.meta||''; document.getElementById('fViews').value=link.views||''; document.getElementById('fDuration').value=link.duration||''; document.getElementById('fYtid').value=link.ytid||''; document.getElementById('fTags').value=(link.tags||[]).join(', '); document.getElementById('urlHint').textContent=link.ytid?'✅ YouTube video':''; populateSectionSelect(secId); openModal('linkModal'); }
+
+function populateSectionSelect(sel){ document.getElementById('fSection').innerHTML=data.map(s=>`<option value="${s.id}"${s.id===sel?' selected':''}>${s.title}</option>`).join(''); }
+
+// Auto-fetch title + detect YT on URL paste
+let fetchDebounce=null;
+document.getElementById('fUrl').addEventListener('input',function(){
+  const url=this.value.trim();
+  const ytid=getYtId(url);
+  document.getElementById('fYtid').value=ytid;
+  // Only auto-fetch if title is empty
+  if(!url||document.getElementById('fTitle').value.trim()){
+    document.getElementById('urlHint').textContent=ytid?'YouTube video detected':'';
+    return;
+  }
+  clearTimeout(fetchDebounce);
+  fetchDebounce=setTimeout(async()=>{
+    document.getElementById('fetchSpinner').style.display='inline';
+    document.getElementById('urlHint').textContent='';
+    try{
+      const res=await fetch('https://api.microlink.io/?url='+encodeURIComponent(url)+'&meta=true',{signal:AbortSignal.timeout(6000)});
+      const j=await res.json();
+      const title=j?.data?.title;
+      if(title&&!document.getElementById('fTitle').value.trim()){
+        document.getElementById('fTitle').value=title;
+        document.getElementById('urlHint').textContent=ytid?'YouTube video detected | title auto-filled':'Title auto-filled';
+      } else if(ytid){
+        document.getElementById('urlHint').textContent='YouTube video detected';
+      }
+    }catch(e){
+      if(ytid) document.getElementById('urlHint').textContent='YouTube video detected';
+    }finally{
+      document.getElementById('fetchSpinner').style.display='none';
+    }
+  },600);
+});
+
+document.getElementById('btnLinkSave').onclick=()=>{
+  const url=document.getElementById('fUrl').value.trim(), title=document.getElementById('fTitle').value.trim();
+  if(!url){toast('URL required','err');return;} if(!title){toast('Title required','err');return;}
+  const link={id:editingLinkId||uid(),url,title, meta:document.getElementById('fMeta').value.trim()||undefined, views:document.getElementById('fViews').value.trim()||undefined, duration:document.getElementById('fDuration').value.trim()||undefined, ytid:document.getElementById('fYtid').value.trim()||undefined, tags:document.getElementById('fTags').value.split(',').map(t=>t.trim()).filter(Boolean)};
+  const targetSecId=document.getElementById('fSection').value;
+  if(editingLinkId) data.forEach(sec=>{sec.links=sec.links.filter(l=>l.id!==editingLinkId);});
+  const sec=data.find(s=>s.id===targetSecId); if(sec) sec.links.push(link);
+  markUnsaved(); closeModal('linkModal'); render(); toast(editingLinkId?'✅ Link updated':'✅ Link added','ok');
+};
+document.getElementById('btnLinkCancel').onclick=()=>closeModal('linkModal');
+
+function deleteLink(linkId){ data.forEach(sec=>{sec.links=sec.links.filter(l=>l.id!==linkId);}); markUnsaved(); render(); toast('Link deleted','ok'); }
+
+// ═══════════════════════════════════════
+// SEARCH
+// ═══════════════════════════════════════
+let suggFocusIdx=-1;
+function filterSearch(q){ const ql=q.toLowerCase().trim(); document.querySelectorAll('.link-card').forEach(c=>{const hay=((c.dataset.title||'')+(c.dataset.tags||'')).toLowerCase();c.classList.toggle('hidden',!!ql&&!hay.includes(ql));}); document.querySelectorAll('.section').forEach(s=>s.classList.toggle('hidden',!!ql&&![...s.querySelectorAll('.link-card')].some(c=>!c.classList.contains('hidden')))); }
+
+function renderSuggestions(q){ const box=document.getElementById('suggestions'); if(!q.trim()){box.classList.remove('open');box.innerHTML='';return;} const ql=q.toLowerCase(); const tagSet=new Set(); data.forEach(sec=>sec.links.forEach(l=>(l.tags||[]).forEach(t=>tagSet.add(t)))); const mT=[...tagSet].filter(t=>t.toLowerCase().includes(ql)); const mS=data.filter(s=>s.title.toLowerCase().includes(ql)&&!hiddenSecs.has(s.id)); const mL=[]; data.forEach(sec=>{if(hiddenSecs.has(sec.id))return;sec.links.forEach(l=>{if(l.title.toLowerCase().includes(ql))mL.push({link:l,secTitle:sec.title});});}); if(!mT.length&&!mS.length&&!mL.length){box.innerHTML='<div class="sugg-no-results">No results</div>';box.classList.add('open');return;} let h=''; if(mS.length){h+='<div class="sugg-group-title">Sections</div>';mS.slice(0,4).forEach(s=>{h+=`<div class="sugg-item" data-action="section" data-secid="${s.id}"><span>${s.icon||'📁'}</span><span>${s.title}</span><span class="sugg-section-label">${s.links.length} links</span></div>`;});} if(mT.length){if(mS.length)h+='<div class="sugg-divider"></div>';h+='<div class="sugg-group-title">Tags</div>';mT.slice(0,8).forEach(t=>{h+=`<div class="sugg-item" data-action="tag" data-tag="${t}"><span>#</span><span class="sugg-tag">${t}</span></div>`;});} if(mL.length){if(mS.length||mT.length)h+='<div class="sugg-divider"></div>';h+='<div class="sugg-group-title">Links</div>';mL.slice(0,5).forEach(({link,secTitle})=>{h+=`<div class="sugg-item" data-action="link" data-linkid="${link.id}"><span>🔗</span><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${link.title}</span><span class="sugg-section-label">${secTitle}</span></div>`;});} box.innerHTML=h;box.classList.add('open');suggFocusIdx=-1; box.querySelectorAll('.sugg-item').forEach(item=>item.addEventListener('mousedown',e=>{e.preventDefault();applySuggestion(item);})); }
+
+function applySuggestion(item){ const action=item.dataset.action,input=document.getElementById('searchInput'),box=document.getElementById('suggestions'); if(action==='tag'){input.value=item.dataset.tag;filterSearch(item.dataset.tag);} else if(action==='section'){document.querySelector(`.section[data-sec-id="${item.dataset.secid}"]`)?.scrollIntoView({behavior:'smooth',block:'start'});input.value='';filterSearch('');} else if(action==='link'){const lnk=data.flatMap(s=>s.links).find(l=>l.id===item.dataset.linkid);if(lnk)document.querySelectorAll('.link-card').forEach(c=>{if(c.getAttribute('href')===lnk.url){c.scrollIntoView({behavior:'smooth',block:'center'});c.style.outline='2px solid var(--accent)';setTimeout(()=>c.style.outline='',1200);}});input.value='';filterSearch('');} box.classList.remove('open'); }
+
+const searchInput=document.getElementById('searchInput'), suggestionsBox=document.getElementById('suggestions');
+searchInput.addEventListener('input',function(){filterSearch(this.value);renderSuggestions(this.value);});
+searchInput.addEventListener('keydown',function(e){ const items=suggestionsBox.querySelectorAll('.sugg-item'); if(!items.length)return; if(e.key==='ArrowDown'){e.preventDefault();suggFocusIdx=Math.min(suggFocusIdx+1,items.length-1);} else if(e.key==='ArrowUp'){e.preventDefault();suggFocusIdx=Math.max(suggFocusIdx-1,0);} else if(e.key==='Enter'&&suggFocusIdx>=0){e.preventDefault();applySuggestion(items[suggFocusIdx]);return;} else if(e.key==='Escape'){suggestionsBox.classList.remove('open');suggFocusIdx=-1;return;} else return; items.forEach((it,i)=>it.classList.toggle('focused',i===suggFocusIdx)); });
+searchInput.addEventListener('focus',function(){if(this.value.trim())renderSuggestions(this.value);});
+document.addEventListener('click',e=>{if(!e.target.closest('.search-wrap')){suggestionsBox.classList.remove('open');suggFocusIdx=-1;}});
+
+// ═══════════════════════════════════════
+// CONFIRM
+// ═══════════════════════════════════════
+function confirmDelete(title,msg,cb){document.getElementById('confirmTitle').innerHTML=title;document.getElementById('confirmMsg').textContent=msg;confirmCb=cb;openModal('confirmModal');}
+document.getElementById('btnConfirmYes').onclick=()=>{closeModal('confirmModal');if(confirmCb)confirmCb();confirmCb=null;};
+document.getElementById('btnConfirmNo').onclick=()=>{closeModal('confirmModal');confirmCb=null;};
+
+// ═══════════════════════════════════════
+// MODALS
+// ═══════════════════════════════════════
+function openModal(id){if(id==='setupModal')initSetupModal();document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.overlay').forEach(el=>el.addEventListener('click',e=>{if(e.target===el)el.classList.remove('open');}));
+
+// ═══════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════
+let _tt;
+function toast(msg,type='ok'){const el=document.getElementById('toast');el.textContent=msg;el.className=`toast show ${type}`;clearTimeout(_tt);_tt=setTimeout(()=>el.classList.remove('show'),3200);}
+
+// ═══════════════════════════════════════
+// CONTEXT MENU
+// ═══════════════════════════════════════
+let ctxUrl='';
+const ctxMenu=document.getElementById('ctxMenu');
+function showCtxMenu(e,url,title){e.preventDefault();ctxUrl=url;document.getElementById('ctxHint').textContent=title.length>36?title.slice(0,36)+'…':title;const x=e.clientX,y=e.clientY,mw=210,mh=130;ctxMenu.style.left=(x+mw>window.innerWidth?x-mw:x)+'px';ctxMenu.style.top=(y+mh>window.innerHeight?y-mh:y)+'px';ctxMenu.className='ctx-menu show';}
+function hideCtxMenu(){ctxMenu.className='ctx-menu';ctxUrl='';}
+document.getElementById('ctxIncognito').onclick=()=>{window.open(ctxUrl,'_blank','noopener,noreferrer');toast('🕵️ Use Settings → New Incognito Window','ok');hideCtxMenu();};
+document.getElementById('ctxNewTab').onclick=()=>{window.open(ctxUrl,'_blank','noopener,noreferrer');hideCtxMenu();};
+document.getElementById('ctxCopy').onclick=()=>{navigator.clipboard.writeText(ctxUrl).then(()=>toast('🔗 Copied!','ok'));hideCtxMenu();};
+document.addEventListener('click',e=>{if(!ctxMenu.contains(e.target))hideCtxMenu();});
+document.addEventListener('scroll',()=>hideCtxMenu(),true);
+
+// ═══════════════════════════════════════
+// KEYBOARD SHORTCUTS
+// ═══════════════════════════════════════
+const isMac=navigator.platform.toUpperCase().includes('MAC');
+let hoveredSecId=null;
+document.addEventListener('mouseover',e=>{const sec=e.target.closest('.section');hoveredSecId=sec?sec.dataset.secId:null;});
+document.getElementById('btnShortcuts').onclick=()=>{['kMod1','kMod2','kMod3','kMod4'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=isMac?'⌘':'Ctrl';});openModal('shortcutsModal');};
+document.addEventListener('keydown',e=>{
+  const mod=isMac?e.metaKey:e.ctrlKey, tag=document.activeElement.tagName.toLowerCase(), inInput=tag==='input'||tag==='textarea'||tag==='select', modalOpen=document.querySelector('.overlay.open');
+  if(e.key==='Escape'){if(modalOpen){modalOpen.classList.remove('open');e.preventDefault();return;}const si=document.getElementById('searchInput');if(si.value){si.value='';si.dispatchEvent(new Event('input'));e.preventDefault();}return;}
+  if(e.key==='?'&&!inInput&&!mod){openModal('shortcutsModal');e.preventDefault();return;}
+  if(!mod)return;
+  if(e.key==='k'||e.key==='K'){e.preventDefault();searchInput.focus();searchInput.select();return;}
+  if(inInput)return;
+  if(e.key==='e'||e.key==='E'){e.preventDefault();document.getElementById('btnToggleEdit').click();return;}
+  if(e.shiftKey&&(e.key==='n'||e.key==='N')){e.preventDefault();document.getElementById('btnAddSection').click();return;}
+  if(!e.shiftKey&&e.key>='1'&&e.key<='9'){e.preventDefault();const idx=parseInt(e.key)-1,vis=data.filter(s=>!hiddenSecs.has(s.id)),sec=vis[idx];if(!sec){toast('No section #'+e.key,'err');return;}const el=document.querySelector(`.section[data-sec-id="${sec.id}"]`);if(el){el.scrollIntoView({behavior:'smooth',block:'start'});document.querySelectorAll('.snav-pill').forEach(p=>p.classList.toggle('active',p.dataset.secId===sec.id));}return;}
+});
+
+// ═══════════════════════════════════════
+// BOOT
+// ═══════════════════════════════════════
+render(); // show welcome/empty state first
+
+if (getToken()) {
+  // Token exists — auto-pull from the hardcoded Gist
+  if (!localStorage.getItem(GIST_ID_KEY)) {
+    localStorage.setItem(GIST_ID_KEY, HARDCODED_GIST_ID);
+  }
+  document.getElementById('btnPush').style.display = 'inline-flex';
+  document.getElementById('root').innerHTML = `<div class="loading-state"><div class="spin"></div><p>Loading from Gist…</p></div>`;
+  setSyncStatus('syncing','Loading…');
+  pullFromGist(true);
+} else {
+  setSyncStatus('','Not connected');
+  // Pre-fill the Gist ID in setup modal
+  localStorage.setItem(GIST_ID_KEY, HARDCODED_GIST_ID);
+}
+</script>
+</body>
+</html>
