@@ -342,10 +342,6 @@ body{background:var(--bg);color:var(--text);font-family:'Space Grotesk',sans-ser
   <div class="modal">
     <div class="modal-title" id="secModalTitle">New Section</div>
     <div class="field"><label>Title *</label><input type="text" id="sTitle" placeholder="e.g. Machine Learning"/></div>
-    <div class="row2">
-      <div class="field"><label>Icon (emoji)</label><input type="text" id="sIcon" placeholder="🤖" maxlength="2"/></div>
-      <div class="field"><label>Icon Color</label><input type="color" id="sColor" value="#1a1a2e"/></div>
-    </div>
     <div class="modal-actions">
       <button class="btn btn-ghost" id="btnSecCancel">Cancel</button>
       <button class="btn btn-primary" id="btnSecSave">Save</button>
@@ -647,7 +643,7 @@ function renderSecNav() {
     const pill = document.createElement('button');
     pill.className = 'snav-pill' + (isHidden ? ' hidden-sec' : '');
     pill.dataset.secId = sec.id;
-    pill.innerHTML = `<span>${sec.icon||'📁'}</span><span>${sec.title}</span><span class="snav-eye" onclick="event.stopPropagation();toggleHideSection('${sec.id}')" title="${isHidden?'Show':'Hide'}">${isHidden?EYE_OFF:EYE_ON}</span>`;
+    pill.innerHTML = `<span>${sec.title}</span><span class="snav-eye" onclick="event.stopPropagation();toggleHideSection('${sec.id}')" title="${isHidden?'Show':'Hide'}">${isHidden?EYE_OFF:EYE_ON}</span>`;
     pill.addEventListener('click', () => {
       if (isHidden) { toggleHideSection(sec.id); return; }
       document.querySelector(`.section[data-sec-id="${sec.id}"]`)?.scrollIntoView({behavior:'smooth',block:'start'});
@@ -701,7 +697,6 @@ function render() {
     if (editMode) cardsHTML += `<button class="add-card-btn" onclick="openAddLink('${sec.id}')"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>Add Link</button>`;
     el.innerHTML = `
       <div class="sec-hdr">
-        <div class="sec-icon" style="background:${sec.iconBg||'#1a1a2e'}">${sec.icon||'📁'}</div>
         <h2>${sec.title}</h2>
         <span class="sec-count">${sec.links.length} link${sec.links.length!==1?'s':''}</span>
         <button class="sec-collapse-btn" onclick="toggleCollapse('${sec.id}')">${isCollapsed?CHV_D:CHV_U}</button>
@@ -779,18 +774,16 @@ document.getElementById('btnToggleEdit').onclick=()=>{
 document.getElementById('btnAddSection').onclick=()=>{
   editingSecId=null;
   document.getElementById('secModalTitle').textContent='New Section';
-  ['sTitle','sIcon'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('sColor').value='#1a1a2e';
+  document.getElementById('sTitle').value='';
   openModal('secModal');
 };
 
-function openEditSection(secId){ const sec=data.find(s=>s.id===secId); if(!sec) return; editingSecId=secId; document.getElementById('secModalTitle').textContent='Edit Section'; document.getElementById('sTitle').value=sec.title; document.getElementById('sIcon').value=sec.icon||''; document.getElementById('sColor').value=sec.iconBg||'#1a1a2e'; openModal('secModal'); }
+function openEditSection(secId){ const sec=data.find(s=>s.id===secId); if(!sec) return; editingSecId=secId; document.getElementById('secModalTitle').textContent='Edit Section'; document.getElementById('sTitle').value=sec.title; openModal('secModal'); }
 
 document.getElementById('btnSecSave').onclick=()=>{
   const title=document.getElementById('sTitle').value.trim(); if(!title){toast('Title required','err');return;}
-  const icon=document.getElementById('sIcon').value.trim()||'📁', color=document.getElementById('sColor').value;
-  if(editingSecId){ const sec=data.find(s=>s.id===editingSecId); if(sec){sec.title=title;sec.icon=icon;sec.iconBg=color;} }
-  else data.push({id:uid(),title,icon,iconBg:color,links:[]});
+  if(editingSecId){ const sec=data.find(s=>s.id===editingSecId); if(sec){sec.title=title;} }
+  else data.push({id:uid(),title,links:[]});
   markUnsaved(); closeModal('secModal'); render(); toast(editingSecId?'✅ Section updated':'✅ Section created','ok');
 };
 document.getElementById('btnSecCancel').onclick=()=>closeModal('secModal');
@@ -808,6 +801,7 @@ function populateSectionSelect(sel){ document.getElementById('fSection').innerHT
 
 // Auto-fetch title + detect YT on URL paste
 let fetchDebounce=null;
+let fetchAbortController=null;
 document.getElementById('fUrl').addEventListener('input',function(){
   const url=this.value.trim();
   const ytid=getYtId(url);
@@ -818,6 +812,10 @@ document.getElementById('fUrl').addEventListener('input',function(){
     return;
   }
   clearTimeout(fetchDebounce);
+  // Abort any pending fetch
+  if(fetchAbortController) fetchAbortController.abort();
+  fetchAbortController = new AbortController();
+  const currentAbort = fetchAbortController;
   fetchDebounce=setTimeout(async()=>{
     document.getElementById('fetchSpinner').style.display='inline';
     document.getElementById('urlHint').textContent='';
@@ -825,19 +823,29 @@ document.getElementById('fUrl').addEventListener('input',function(){
       const res=await fetch('https://api.microlink.io/?url='+encodeURIComponent(url)+'&meta=true',{signal:AbortSignal.timeout(6000)});
       const j=await res.json();
       const title=j?.data?.title;
-      if(title&&!document.getElementById('fTitle').value.trim()){
+      // Only update if this fetch wasn't aborted and title field is still empty
+      if(!currentAbort.signal.aborted && title&&!document.getElementById('fTitle').value.trim()){
         document.getElementById('fTitle').value=title;
         document.getElementById('urlHint').textContent=ytid?'YouTube video detected | title auto-filled':'Title auto-filled';
-      } else if(ytid){
+      } else if(!currentAbort.signal.aborted && ytid){
         document.getElementById('urlHint').textContent='YouTube video detected';
       }
     }catch(e){
-      if(ytid) document.getElementById('urlHint').textContent='YouTube video detected';
+      if(!currentAbort.signal.aborted){
+        if(ytid) document.getElementById('urlHint').textContent='YouTube video detected';
+      }
     }finally{
-      document.getElementById('fetchSpinner').style.display='none';
+      if(!currentAbort.signal.aborted) document.getElementById('fetchSpinner').style.display='none';
     }
   },600);
 });
+
+// Clear debounce and abort fetch when modal closes
+document.getElementById('btnLinkCancel').onclick=()=>{
+  clearTimeout(fetchDebounce);
+  if(fetchAbortController) fetchAbortController.abort();
+  closeModal('linkModal');
+};
 
 document.getElementById('btnLinkSave').onclick=()=>{
   const url=document.getElementById('fUrl').value.trim(), title=document.getElementById('fTitle').value.trim();
@@ -848,7 +856,6 @@ document.getElementById('btnLinkSave').onclick=()=>{
   const sec=data.find(s=>s.id===targetSecId); if(sec) sec.links.push(link);
   markUnsaved(); closeModal('linkModal'); render(); toast(editingLinkId?'✅ Link updated':'✅ Link added','ok');
 };
-document.getElementById('btnLinkCancel').onclick=()=>closeModal('linkModal');
 
 function deleteLink(linkId){ data.forEach(sec=>{sec.links=sec.links.filter(l=>l.id!==linkId);}); markUnsaved(); render(); toast('Link deleted','ok'); }
 
