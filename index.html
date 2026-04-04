@@ -5,9 +5,19 @@
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCUiIHkxPSIwJSIgeDI9IjEwMCUiIHkyPSIxMDAlIj48c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjZjQ3MmI2Ii8+PHN0b3Agb2Zmc2V0PSIzNSUiIHN0b3AtY29sb3I9IiNhNzhiZmEiLz48c3RvcCBvZmZzZXQ9IjY1JSIgc3RvcC1jb2xvcj0iIzYwYTVmYSIvPjxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzM0ZDM5OSIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiIgcng9IjgiIGZpbGw9InVybCgjZykiLz48dGV4dCB4PSI3IiB5PSIyNCIgZm9udC1mYW1pbHk9Ikdlb3JnaWEsc2VyaWYiIGZvbnQtd2VpZ2h0PSJib2xkIiBmb250LXNpemU9IjIyIiBmaWxsPSJ3aGl0ZSI+TDwvdGV4dD48L3N2Zz4="/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Linkfolio</title>
+<script>
+  const t = localStorage.getItem('rh_theme') || 'light';
+  if (t === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+</script>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Outfit:wght@700;800;900&display=swap" rel="stylesheet"/>
 <style>
 :root{
+  --bg:#f8f8fa;--surface:#ffffff;--s2:#f3f3f6;--border:#e5e5e7;
+  --accent:#6366f1;--ah:#4f46e5;--text:#1a1a1a;--muted:#71717a;
+  --tag-bg:#ede9fe;--tag:#4c1d95;--r:12px;--danger:#ef4444;--ok:#22c55e;
+  --warn:#f59e0b;
+}
+html[data-theme="dark"]{
   --bg:#09090b;--surface:#111113;--s2:#18181b;--border:#27272a;
   --accent:#6366f1;--ah:#4f46e5;--text:#f4f4f5;--muted:#71717a;
   --tag-bg:#1e1b4b;--tag:#a5b4fc;--r:12px;--danger:#ef4444;--ok:#22c55e;
@@ -18,7 +28,8 @@ html,body{width:100%;overflow-x:hidden}
 body{background:var(--bg);color:var(--text);font-family:'Space Grotesk',sans-serif;min-height:100vh}
 
 /* TOPBAR */
-.topbar{position:sticky;top:0;z-index:200;background:rgba(9,9,11,.95);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 24px;height:52px;display:flex;align-items:center;gap:10px}
+.topbar{position:sticky;top:0;z-index:200;background:rgba(248,248,250,.95);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 24px;height:52px;display:flex;align-items:center;gap:10px}
+html[data-theme="dark"] .topbar{background:rgba(9,9,11,.95)}
 .tb-title{font-family:'Outfit',sans-serif;font-weight:900;font-size:1.15rem;letter-spacing:-.02em;flex-shrink:0;background:linear-gradient(90deg,#f472b6,#a78bfa,#60a5fa,#34d399);background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:titleShift 4s linear infinite}
 .search-wrap{position:relative;flex:1;max-width:320px}
 .search-bar{display:flex;align-items:center;gap:8px;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:6px 14px;width:100%;transition:border-color .2s}
@@ -42,7 +53,8 @@ body{background:var(--bg);color:var(--text);font-family:'Space Grotesk',sans-ser
 .unsaved-badge.show{display:flex}
 
 /* SECTION NAV */
-.sec-nav{position:sticky;top:52px;z-index:190;background:rgba(17,11,32,.97);backdrop-filter:blur(20px);border-bottom:1px solid rgba(99,102,241,.18);padding:0 24px;display:flex;align-items:center;gap:2px;overflow-x:auto;scrollbar-width:none}
+.sec-nav{position:sticky;top:52px;z-index:190;background:rgba(248,248,250,.98);backdrop-filter:blur(20px);border-bottom:1px solid rgba(99,102,241,.18);padding:0 24px;display:flex;align-items:center;gap:2px;overflow-x:auto;scrollbar-width:none}
+html[data-theme="dark"] .sec-nav{background:rgba(17,11,32,.97)}
 .sec-nav::-webkit-scrollbar{display:none}
 .sec-nav-empty{padding:10px 0;font-size:12px;color:var(--muted);font-style:italic}
 .snav-pill{display:inline-flex;align-items:center;gap:5px;padding:0 12px;height:38px;border-radius:0;border:none;background:transparent;color:var(--muted);font-family:inherit;font-size:.82rem;font-weight:500;cursor:pointer;white-space:nowrap;transition:color .18s;border-bottom:2px solid transparent;margin-bottom:-1px}
@@ -234,6 +246,7 @@ body{background:var(--bg);color:var(--text);font-family:'Space Grotesk',sans-ser
     <span id="syncLabel">Not connected</span>
   </div>
   <button class="btn btn-push" id="btnPush" onclick="pushToGist()" title="Push changes to Gist" style="display:none">⬆ Push</button>
+  <button class="kbd-hint" id="btnTheme" title="Toggle theme"><span>🌙</span></button>
   <button class="kbd-hint" id="btnShortcuts"><span class="kbd">?</span></button>
   <button class="btn btn-ghost" id="btnToggleEdit">✏️ Edit</button>
   <button class="btn btn-primary" id="btnAddSection">＋ Section</button>
@@ -407,7 +420,7 @@ const HARDCODED_GIST_ID = 'f2b2daeaef6595a768c9d9efc580ebdd';
 const uid       = () => Math.random().toString(36).slice(2,9);
 const getDomain = u  => { try { return new URL(u).hostname.replace('www.',''); } catch { return u; } };
 const getYtId   = url=> { try { const u=new URL(url); if(u.hostname.includes('youtube.com')) return u.searchParams.get('v')||''; if(u.hostname.includes('youtu.be')) return u.pathname.slice(1); } catch{} return ''; };
-const domainGrad= d  => { let h=0; for(let i=0;i<d.length;i++) h=(h*31+d.charCodeAt(i))>>>0; const hue=h%360; return `linear-gradient(135deg,hsl(${hue},30%,8%),hsl(${(hue+50)%360},40%,14%))`; };
+const domainGrad= d  => { let h=0; for(let i=0;i<d.length;i++) h=(h*31+d.charCodeAt(i))>>>0; const hue=h%360; const isDark=getTheme()==='dark'; return isDark?`linear-gradient(135deg,hsl(${hue},30%,8%),hsl(${(hue+50)%360},40%,14%))` : `linear-gradient(135deg,hsl(${hue},60%,85%),hsl(${(hue+50)%360},50%,75%))`; };
 const getToken  = () => localStorage.getItem(TOKEN_KEY) || '';
 const getGistId = () => localStorage.getItem(GIST_ID_KEY) || HARDCODED_GIST_ID;
 
@@ -927,8 +940,32 @@ document.addEventListener('keydown',e=>{
 });
 
 // ═══════════════════════════════════════
+// THEME TOGGLE
+// ═══════════════════════════════════════
+const THEME_KEY = 'rh_theme';
+function getTheme() { return localStorage.getItem(THEME_KEY) || 'light'; }
+function setTheme(theme) {
+  localStorage.setItem(THEME_KEY, theme);
+  if (theme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    document.getElementById('btnTheme').textContent = '☀️';
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+    document.getElementById('btnTheme').textContent = '🌙';
+  }
+}
+document.getElementById('btnTheme').onclick = () => {
+  const current = getTheme();
+  const next = current === 'dark' ? 'light' : 'dark';
+  setTheme(next);
+};
+
+// ═══════════════════════════════════════
 // BOOT
 // ═══════════════════════════════════════
+// Initialize theme first
+setTheme(getTheme());
+
 render(); // show welcome/empty state first
 
 if (getToken()) {
